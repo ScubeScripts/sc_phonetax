@@ -4,19 +4,17 @@ lua54 'yes'
 
 name "sc_phonetax"
 author "Scube Scripts"
-version "1.0.1"
+version "1.0.2"
 description "The script adds mobile phone bill to the game."
 
 server_scripts {
-	'server/server.lua',
-	'server/updater.lua'
+	'server/*.lua'
 }
 
 client_scripts {
-	'client/client.lua'
+	'client/*.lua'
 }
 
 shared_script {
-	'@ox_lib/init.lua',
 	'config.lua'
   }

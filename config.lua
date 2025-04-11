@@ -19,18 +19,7 @@ Config.ItemsToCheck = {
     --{name = "newitem", minimumCount = 1},
 }
 
-Config.Notify = {
-    {name = "bulletin", enabled = false},
-    {name = "default", enabled = true},
-    {name = "ox_lib", enabled = false},
-}
-
-Config.Delay = 5000 --How long should the notification be displayed || Default 5 seconds
-Config.Char = 'WEB_FRUIT' -- Find other Chars: https://wiki.rage.mp/index.php?title=Notification_Pictures
-Config.Position = 'bottomleft' -- "bottomleft", "topleft", "topright", "bottomright", "bottom", "top"
-Config.Progress = true -- true/false
-Config.exitAnim = 'fadeOut'
-Config.Theme = 'info' -- Other Themes: (default, success, info, warning, error)
+Config.Notify = 'sc_notify' -- Use 'sc_notify' or 'standard'
 
 Translation = {
     ['de'] = {

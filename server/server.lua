@@ -1,4 +1,10 @@
-ESX = exports["es_extended"]:getSharedObject()
+local Framework = nil
+
+if GetResourceState("es_extended") == "started" then
+    Framework = "es_extended"
+elseif GetResourceState("qb-core") == "started" then
+    Framework = "qb-core"
+end
 
 local price = Config.Price
 
@@ -9,42 +15,53 @@ end
 Citizen.CreateThread(function()
     while true do
         for _, playerid in pairs(GetPlayers()) do
-            local xPlayer = ESX.GetPlayerFromId(playerid)
-            
-            local totalPrice = 0
-            
-            for _, itemToCheck in ipairs(Config.ItemsToCheck) do
-                if xPlayer.getInventoryItem(itemToCheck.name) ~= nil then
-                    local itemCount = xPlayer.getInventoryItem(itemToCheck.name).count
-                    if itemCount >= itemToCheck.minimumCount then 
-                        totalPrice = totalPrice + price
-                    end
-                end    
+            local xPlayer = nil
+            if Framework == "es_extended" then
+                xPlayer = exports["es_extended"]:getSharedObject().GetPlayerFromId(playerid)
+            elseif Framework == "qb-core" then
+                xPlayer = exports["qb-core"]:GetCoreObject().Functions.GetPlayer(playerid)
             end
 
-            if totalPrice > 0 then
-                xPlayer.removeAccountMoney('bank', totalPrice)
+            if xPlayer then
+                local totalPrice = 0
 
-                for _, notifyModule in ipairs(Config.Notify) do
-                    if notifyModule.enabled then
-                        local notificationText = Translation[Config.Locale]['text'] .. totalPrice .. Translation[Config.Locale]['text_2']
-                        
-                        if notifyModule.name == "ox_lib" then
-                            notificationText = removeColorCodes(notificationText)
-                        end
+                for _, itemToCheck in ipairs(Config.ItemsToCheck) do
+                    local itemCount = 0
+                    if Framework == "es_extended" then
+                        local item = xPlayer.getInventoryItem(itemToCheck.name)
+                        if item then itemCount = item.count end
+                    elseif Framework == "qb-core" then
+                        local item = xPlayer.Functions.GetItemByName(itemToCheck.name)
+                        if item then itemCount = item.amount end
+                    end
 
-                        if notifyModule.name == "bulletin" then
-                            TriggerClientEvent('bulletin:sendAdvanced', xPlayer.source, notificationText, Translation[Config.Locale]['handy'], Translation[Config.Locale]['pay_text'], Config.Char, Config.Delay, Config.Position, Config.Progress, Config.Theme, Config.exitAnim)
-                        elseif notifyModule.name == "default" then
-                            TriggerClientEvent('scphonetax:sendtax', xPlayer.source, 'CHAR_CHAT_CALL', notificationText, Translation[Config.Locale]['handy'], Translation[Config.Locale]['pay_text'])
-                        elseif notifyModule.name == "ox_lib" then
-                            TriggerClientEvent('ox_lib:notify', xPlayer.source, {
-                                id = 'phone_notify',
-                                title = Translation[Config.Locale]['pay_text'],
-                                description = notificationText,
-                                duration = 5000,
-                                icon = 'mobile-screen-button'
-                            })
+                    if itemCount >= itemToCheck.minimumCount then
+                        totalPrice = totalPrice + price
+                    end
+                end
+
+                if totalPrice > 0 then
+                    if Framework == "es_extended" then
+                        xPlayer.removeAccountMoney('bank', totalPrice)
+                    elseif Framework == "qb-core" then
+                        xPlayer.Functions.RemoveMoney('bank', totalPrice)
+                    end
+
+                    local notificationText = Translation[Config.Locale]['text'] .. totalPrice .. Translation[Config.Locale]['text_2']
+
+                    if Config.Notify == "sc_notify" then
+                        notificationText = removeColorCodes(notificationText)
+                        TriggerClientEvent('sc_notify:notify', playerid, {
+                            title = Translation[Config.Locale]['pay_text'],
+                            description = notificationText,
+                            duration = 5000,
+                            icon = 'mobile-screen-button'
+                        })
+                    elseif Config.Notify == "standard" then
+                        if Framework == "es_extended" then
+                            TriggerClientEvent('scphonetax:sendtax', playerid, 'CHAR_CHAT_CALL', notificationText, Translation[Config.Locale]['handy'], Translation[Config.Locale]['pay_text'])
+                        elseif Framework == "qb-core" then
+                            TriggerClientEvent('QBCore:Notify', playerid, removeColorCodes(notificationText), 'success')
                         end
                     end
                 end
